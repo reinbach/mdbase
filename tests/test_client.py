@@ -3,7 +3,7 @@ import zmq
 
 from mdbase.client import MajorDomoClient
 
-class TestClient(unittest.TestCase):
+class TestMajorDomoClient(unittest.TestCase):
 
     def setUp(self):
         self.broker_url = "tcp://localhost:6666"
