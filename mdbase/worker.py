@@ -85,7 +85,7 @@ class MajorDomoWorker(object):
         if option:
             msg = [option] + msg
 
-        msg = ['', W_WORKER, command] + msg
+        msg = [b'', W_WORKER, command] + msg
         if self.verbose:
             logging.info("I: sending %s to broker", command)
             dump(msg)
