@@ -1,7 +1,14 @@
+import logging
+import sys
 import unittest
 import zmq
 
+from test import support
+
 from mdbase.broker import Service, Worker, MajorDomoBroker
+
+log = logging.getLogger()
+log.addHandler(logging.StreamHandler(sys.stdout))
 
 class TestBrokerService(unittest.TestCase):
     def test_service_instantiate(self):
@@ -52,9 +59,70 @@ class TestBrokerModel(unittest.TestCase):
         #TODO ensure workers list is cleared
 
     @unittest.skip("building up to it")
+    def test_process_client(self):
+        """Test process client method"""
+        pass
+
     def test_require_worker(self):
         """Test require worker method"""
+        address = b"tcp://localhost:6666"
+        self.assertEqual(len(self.broker.workers), 0)
+        worker = self.broker.require_worker(address)
+        self.assertEqual(len(self.broker.workers), 1)
+        self.assertEqual(worker.address, address)
+
+    @unittest.skip("building up to it")
+    def test_process_worker(self):
+        """Test process worker method"""
         pass
+
+    @unittest.skip("building up to it")
+    def test_delete_worker(self):
+        """Test delete worker method"""
+        pass
+
+    def test_require_service(self):
+        """Test require service method"""
+        service = b"W_ECHO"
+        address = b"tcp://localhost:6666"
+        self.assertEqual(len(self.broker.services), 0)
+        worker = self.broker.require_worker(address)
+        worker.service = self.broker.require_service(service)
+        self.assertEqual(len(self.broker.services), 1)
+        self.assertIn(service, self.broker.services.keys())
+        self.assertIn(worker.service, self.broker.services.values())
+        self.assertIsInstance(self.broker.services[service], Service)
+
+    @unittest.skip("building up to it")
+    def test_service_internal(self):
+        """Test service internal method"""
+        pass
+
+    @unittest.skip("building up to it")
+    def test_send_heartbeats(self):
+        """Test send heartbeats method"""
+        pass
+
+    @unittest.skip("building up to it")
+    def test_purge_workers(self):
+        """Test purge workers method"""
+        pass
+
+    @unittest.skip("building up to it")
+    def test_worker_waiting(self):
+        """Test worker waiting method"""
+        pass
+
+    @unittest.skip("building up to it")
+    def test_dispatch(self):
+        """Test dispatch method"""
+        pass
+
+    @unittest.skip("building up to it")
+    def test_send_to_worker(self):
+        """Test send to worker method"""
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()
