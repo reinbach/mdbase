@@ -18,6 +18,8 @@ from constants import (C_CLIENT, W_WORKER, W_REQUEST, W_READY,
                        W_REPLY, W_DISCONNECT, W_HEARTBEAT)
 from utils import dump
 
+log = logging.getLogger(__name__)
+
 class Service(object):
     """A single service"""
     name = None # Service name
@@ -77,11 +79,6 @@ class MajorDomoBroker(object):
         self.socket.linger = 0
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
-        logging.basicConfig(
-            format="%(asctime)s %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-            level=logging.INFO
-        )
 
     def mediate(self):
         """Main broker work happens here"""
@@ -94,7 +91,7 @@ class MajorDomoBroker(object):
             if items:
                 msg = self.socket.recv_multipart()
                 if self.verbose:
-                    logging.info("I: received message: ")
+                    log.info("I: received message: ")
                     dump(msg)
 
                 sender = msg.pop(0)
@@ -107,7 +104,7 @@ class MajorDomoBroker(object):
                 elif (W_WORKER == header):
                     self.process_worker(sender, msg)
                 else:
-                    logging.error("E: invalid message: ")
+                    log.error("E: invalid message: ")
                     dump(msg)
 
             self.purge_workers()
@@ -174,7 +171,7 @@ class MajorDomoBroker(object):
         elif (W_DISCONNECT == command):
             self.delete_worker(worker, False)
         else:
-            logging.error("E: invalid message: ")
+            log.error("E: invalid message: ")
             dump(msg)
 
     def delete_worker(self, worker, disconnect):
@@ -196,7 +193,7 @@ class MajorDomoBroker(object):
             worker = Worker(identity, address, self.HEARTBEAT_EXPIRY)
             self.workers[identity] = worker
             if self.verbose:
-                logging.info("I: registering new worker: %s", identity)
+                log.info("I: registering new worker: %s", identity)
 
         return worker
 
@@ -216,7 +213,7 @@ class MajorDomoBroker(object):
         We use a single socket for both clients and workers
         """
         self.socket.bind(endpoint)
-        logging.info("I: MDP broker/0.1.1 is active at %s", endpoint)
+        log.info("I: MDP broker/0.1.1 is active at %s", endpoint)
 
     def service_internal(self, service, msg):
         """Handle internal service according to 8/MMI specification"""
@@ -248,7 +245,7 @@ class MajorDomoBroker(object):
         while self.waiting:
             w = self.waiting[0]
             if w.expiry < time.time():
-                logging.info("I: deleting expired worker: %s", w.identity)
+                log.info("I: deleting expired worker: %s", w.identity)
                 self.delete_worker(w, False)
                 self.waiting.pop(0)
             else:
@@ -291,13 +288,19 @@ class MajorDomoBroker(object):
         msg = [worker.address, '', W_WORKER, command] + msg
 
         if self.verbose:
-            logging.info("I: sending %r to worker: ", command)
+            log.info("I: sending %r to worker: ", command)
             dump(msg)
 
         self.socket.send_multipart(msg)
 
 def main():
     """Create and start new broker"""
+    logging.basicConfig(
+        format="%(asctime)s %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        level=logging.INFO
+    )
+
     verbose = "-v" in sys.argv
     broker = MajorDomoBroker(verbose)
     broker.bind("tcp://*:5555")
