@@ -3,8 +3,6 @@ import sys
 import unittest
 import zmq
 
-from test import support
-
 from mdbase.broker import Service, Worker, MajorDomoBroker
 
 log = logging.getLogger()
@@ -76,14 +74,36 @@ class TestBrokerModel(unittest.TestCase):
         """Test process worker method"""
         pass
 
-    @unittest.skip("building up to it")
     def test_delete_worker(self):
         """Test delete worker method"""
+        address = b"tcp://localhost:6666"
+        self.assertEqual(len(self.broker.workers), 0)
+        worker = self.broker.require_worker(address)
+        self.assertEqual(len(self.broker.workers), 1)
+
+        # delete but no disconnect
+        self.broker.delete_worker(worker, False)
+        self.assertEqual(len(self.broker.workers), 0)
+
+    def test_delete_worker_disconnect(self):
+        """Test delete worker method with disconnect call to worker"""
+        address = b"tcp://localhost:6666"
+        self.assertEqual(len(self.broker.workers), 0)
+        worker = self.broker.require_worker(address)
+        self.assertEqual(len(self.broker.workers), 1)
+
+        # delete and disconnect
+        self.broker.delete_worker(worker, True)
+        self.assertEqual(len(self.broker.workers), 0)
+
+    @unittest.skip("need work service to not be none")
+    def test_delete_worker_service(self):
+        """Test delete worker method with service not none"""
         pass
 
     def test_require_service(self):
         """Test require service method"""
-        service = b"W_ECHO"
+        service = b"S_ECHO"
         address = b"tcp://localhost:6666"
         self.assertEqual(len(self.broker.services), 0)
         worker = self.broker.require_worker(address)
@@ -108,10 +128,17 @@ class TestBrokerModel(unittest.TestCase):
         """Test purge workers method"""
         pass
 
-    @unittest.skip("building up to it")
     def test_worker_waiting(self):
         """Test worker waiting method"""
-        pass
+        service = b"S_ECHO"
+        address = b"tcp://localhost:6666"
+        worker = self.broker.require_worker(address)
+        worker.service = self.broker.require_service(service)
+        self.assertEqual(len(self.broker.waiting), 0)
+        self.assertEqual(len(worker.service.waiting), 0)
+        self.broker.worker_waiting(worker)
+        self.assertEqual(len(self.broker.waiting), 1)
+        self.assertEqual(len(worker.service.waiting), 1)
 
     @unittest.skip("building up to it")
     def test_dispatch(self):

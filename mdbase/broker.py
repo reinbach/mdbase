@@ -285,7 +285,7 @@ class MajorDomoBroker(object):
         # and routing envelope
         if option is not None:
             msg = [option] + msg
-        msg = [worker.address, '', W_WORKER, command] + msg
+        msg = [worker.address, b'', W_WORKER, command] + msg
 
         if self.verbose:
             log.info("I: sending %r to worker: ", command)
