@@ -1,5 +1,6 @@
 import logging
 import sys
+import time
 import unittest
 import zmq
 
@@ -31,7 +32,8 @@ class TestBrokerWorker(unittest.TestCase):
 
 class TestBrokerModel(unittest.TestCase):
     def setUp(self):
-        self.broker = MajorDomoBroker(False)
+        self.broker = MajorDomoBroker()
+        self.broker_verbose = MajorDomoBroker(True)
 
     def test_broker_instantiate(self):
         """Test instantiating majordomo worker model"""
@@ -69,6 +71,10 @@ class TestBrokerModel(unittest.TestCase):
         self.assertEqual(len(self.broker.workers), 1)
         self.assertEqual(worker.address, address)
 
+        # verbose
+        worker = self.broker_verbose.require_worker(address)
+        self.assertEqual(len(self.broker_verbose.workers), 1)
+
     @unittest.skip("building up to it")
     def test_process_worker(self):
         """Test process worker method"""
@@ -82,6 +88,15 @@ class TestBrokerModel(unittest.TestCase):
         self.assertEqual(len(self.broker.workers), 1)
 
         # delete but no disconnect
+        self.broker.delete_worker(worker, False)
+        self.assertEqual(len(self.broker.workers), 0)
+
+        # test when worker service is set
+        service = b"S_ECHO"
+        worker = self.broker.require_worker(address)
+        worker.service = self.broker.require_service(service)
+        self.broker.worker_waiting(worker)
+        self.assertEqual(len(self.broker.workers), 1)
         self.broker.delete_worker(worker, False)
         self.assertEqual(len(self.broker.workers), 0)
 
@@ -123,10 +138,28 @@ class TestBrokerModel(unittest.TestCase):
         """Test send heartbeats method"""
         pass
 
-    @unittest.skip("building up to it")
     def test_purge_workers(self):
         """Test purge workers method"""
-        pass
+        service1 = b"S_ECHO"
+        address1 = b"tcp://localhost:6666"
+        worker1 = self.broker.require_worker(address1)
+        worker1.service = self.broker.require_service(service1)
+
+        service2 = b"S_LOG"
+        address2 = b"tcp://localhost:6667"
+        worker2 = self.broker.require_worker(address2)
+        worker2.service = self.broker.require_service(service2)
+
+        self.broker.worker_waiting(worker1)
+        self.broker.worker_waiting(worker2)
+
+        self.assertEqual(len(self.broker.waiting), 2)
+
+        # modify expiry to be in past for worker1
+        worker1.expiry = time.time() - 1
+
+        self.broker.purge_workers()
+        self.assertEqual(len(self.broker.waiting), 1)
 
     def test_worker_waiting(self):
         """Test worker waiting method"""
