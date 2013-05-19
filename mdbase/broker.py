@@ -217,10 +217,10 @@ class MajorDomoBroker(object):
 
     def service_internal(self, service, msg):
         """Handle internal service according to 8/MMI specification"""
-        returncode = "501"
-        if "mmi.service" == service:
+        returncode = b"501"
+        if b"mmi.service" == service:
             name = msg[-1]
-            returncode = "200" if name in self.services else "404"
+            returncode = b"200" if name in self.services else b"404"
         msg[-1] = returncode
 
         # insert the protocol header and service name after the routing

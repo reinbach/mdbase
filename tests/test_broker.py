@@ -125,10 +125,9 @@ class TestBrokerModel(unittest.TestCase):
         self.assertIn(worker.service, self.broker.services.values())
         self.assertIsInstance(self.broker.services[self.service], Service)
 
-    @unittest.skip("building up to it")
     def test_service_internal(self):
         """Test service internal method"""
-        pass
+        self.broker.service_internal(b"mmi.service", [b"", b"Hello"])
 
     def test_send_heartbeats(self):
         """Test send heartbeats method"""
