@@ -57,8 +57,7 @@ class TestBrokerModel(unittest.TestCase):
     @unittest.skip("builing up to it")
     def test_broker_destroy(self):
         """Test destroy broker method"""
-        verbose = True
-        b = MajorDomoBroker(verbose)
+        b = MajorDomoBroker(False)
         b.destroy()
         #TODO ensure workers list is cleared
 
@@ -131,10 +130,16 @@ class TestBrokerModel(unittest.TestCase):
         """Test service internal method"""
         pass
 
-    @unittest.skip("building up to it")
     def test_send_heartbeats(self):
         """Test send heartbeats method"""
-        pass
+        worker = self.broker.require_worker(self.address)
+        worker.service = self.broker.require_service(self.service)
+        self.broker.worker_waiting(worker)
+
+        cur_heatbeat_at = self.broker.heartbeat_at
+        self.broker.heartbeat_at = time.time() - 10
+        self.broker.send_heartbeats()
+        self.assertTrue(self.broker.heartbeat_at > cur_heatbeat_at)
 
     def test_purge_workers(self):
         """Test purge workers method"""
