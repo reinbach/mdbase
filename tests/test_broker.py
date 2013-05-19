@@ -181,8 +181,6 @@ class TestBrokerModel(unittest.TestCase):
 
         with support.captured_stdout() as s:
             self.assertIsNone(self.broker_verbose.send_to_worker(worker, W_READY, None))
-            #test
-            print(s)
             self.assertIn("{addr}".format(addr=self.address), s.getvalue())
 
 
