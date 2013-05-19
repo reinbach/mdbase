@@ -4,7 +4,9 @@ import time
 import unittest
 import zmq
 
-from mdbase.broker import Service, Worker, MajorDomoBroker
+from test import support
+
+from mdbase.broker import Service, Worker, MajorDomoBroker, W_READY
 
 log = logging.getLogger()
 log.addHandler(logging.StreamHandler(sys.stdout))
@@ -34,6 +36,8 @@ class TestBrokerModel(unittest.TestCase):
     def setUp(self):
         self.broker = MajorDomoBroker()
         self.broker_verbose = MajorDomoBroker(True)
+        self.address = b"tcp://localhost:6666"
+        self.service = b"S_ECHO"
 
     def test_broker_instantiate(self):
         """Test instantiating majordomo worker model"""
@@ -65,14 +69,13 @@ class TestBrokerModel(unittest.TestCase):
 
     def test_require_worker(self):
         """Test require worker method"""
-        address = b"tcp://localhost:6666"
         self.assertEqual(len(self.broker.workers), 0)
-        worker = self.broker.require_worker(address)
+        worker = self.broker.require_worker(self.address)
         self.assertEqual(len(self.broker.workers), 1)
-        self.assertEqual(worker.address, address)
+        self.assertEqual(worker.address, self.address)
 
         # verbose
-        worker = self.broker_verbose.require_worker(address)
+        worker = self.broker_verbose.require_worker(self.address)
         self.assertEqual(len(self.broker_verbose.workers), 1)
 
     @unittest.skip("building up to it")
@@ -82,9 +85,8 @@ class TestBrokerModel(unittest.TestCase):
 
     def test_delete_worker(self):
         """Test delete worker method"""
-        address = b"tcp://localhost:6666"
         self.assertEqual(len(self.broker.workers), 0)
-        worker = self.broker.require_worker(address)
+        worker = self.broker.require_worker(self.address)
         self.assertEqual(len(self.broker.workers), 1)
 
         # delete but no disconnect
@@ -92,9 +94,8 @@ class TestBrokerModel(unittest.TestCase):
         self.assertEqual(len(self.broker.workers), 0)
 
         # test when worker service is set
-        service = b"S_ECHO"
-        worker = self.broker.require_worker(address)
-        worker.service = self.broker.require_service(service)
+        worker = self.broker.require_worker(self.address)
+        worker.service = self.broker.require_service(self.service)
         self.broker.worker_waiting(worker)
         self.assertEqual(len(self.broker.workers), 1)
         self.broker.delete_worker(worker, False)
@@ -102,9 +103,8 @@ class TestBrokerModel(unittest.TestCase):
 
     def test_delete_worker_disconnect(self):
         """Test delete worker method with disconnect call to worker"""
-        address = b"tcp://localhost:6666"
         self.assertEqual(len(self.broker.workers), 0)
-        worker = self.broker.require_worker(address)
+        worker = self.broker.require_worker(self.address)
         self.assertEqual(len(self.broker.workers), 1)
 
         # delete and disconnect
@@ -118,15 +118,13 @@ class TestBrokerModel(unittest.TestCase):
 
     def test_require_service(self):
         """Test require service method"""
-        service = b"S_ECHO"
-        address = b"tcp://localhost:6666"
         self.assertEqual(len(self.broker.services), 0)
-        worker = self.broker.require_worker(address)
-        worker.service = self.broker.require_service(service)
+        worker = self.broker.require_worker(self.address)
+        worker.service = self.broker.require_service(self.service)
         self.assertEqual(len(self.broker.services), 1)
-        self.assertIn(service, self.broker.services.keys())
+        self.assertIn(self.service, self.broker.services.keys())
         self.assertIn(worker.service, self.broker.services.values())
-        self.assertIsInstance(self.broker.services[service], Service)
+        self.assertIsInstance(self.broker.services[self.service], Service)
 
     @unittest.skip("building up to it")
     def test_service_internal(self):
@@ -140,15 +138,11 @@ class TestBrokerModel(unittest.TestCase):
 
     def test_purge_workers(self):
         """Test purge workers method"""
-        service1 = b"S_ECHO"
-        address1 = b"tcp://localhost:6666"
-        worker1 = self.broker.require_worker(address1)
-        worker1.service = self.broker.require_service(service1)
+        worker1 = self.broker.require_worker(self.address)
+        worker1.service = self.broker.require_service(self.service)
 
-        service2 = b"S_LOG"
-        address2 = b"tcp://localhost:6667"
-        worker2 = self.broker.require_worker(address2)
-        worker2.service = self.broker.require_service(service2)
+        worker2 = self.broker.require_worker(b"tcp://localhost:6667")
+        worker2.service = self.broker.require_service(b"S_LOG")
 
         self.broker.worker_waiting(worker1)
         self.broker.worker_waiting(worker2)
@@ -163,10 +157,8 @@ class TestBrokerModel(unittest.TestCase):
 
     def test_worker_waiting(self):
         """Test worker waiting method"""
-        service = b"S_ECHO"
-        address = b"tcp://localhost:6666"
-        worker = self.broker.require_worker(address)
-        worker.service = self.broker.require_service(service)
+        worker = self.broker.require_worker(self.address)
+        worker.service = self.broker.require_service(self.service)
         self.assertEqual(len(self.broker.waiting), 0)
         self.assertEqual(len(worker.service.waiting), 0)
         self.broker.worker_waiting(worker)
@@ -178,10 +170,20 @@ class TestBrokerModel(unittest.TestCase):
         """Test dispatch method"""
         pass
 
-    @unittest.skip("building up to it")
     def test_send_to_worker(self):
         """Test send to worker method"""
-        pass
+        worker = self.broker.require_worker(self.address)
+        self.assertIsNone(self.broker.send_to_worker(worker, W_READY, None))
+        self.assertIsNone(self.broker.send_to_worker(worker, W_READY, None, b'Hello'))
+        self.assertIsNone(self.broker.send_to_worker(worker, W_READY, b'Hello'))
+
+        worker = self.broker_verbose.require_worker(self.address)
+
+        with support.captured_stdout() as s:
+            self.assertIsNone(self.broker_verbose.send_to_worker(worker, W_READY, None))
+            #test
+            print(s)
+            self.assertIn("{addr}".format(addr=self.address), s.getvalue())
 
 
 if __name__ == '__main__':
