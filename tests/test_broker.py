@@ -37,7 +37,7 @@ class TestBrokerModel(unittest.TestCase):
         self.broker = MajorDomoBroker()
         self.broker_verbose = MajorDomoBroker(True)
         self.address = b"tcp://localhost:6666"
-        self.service = b"S_ECHO"
+        self.service = Service(b"S_ECHO")
 
     def test_broker_instantiate(self):
         """Test instantiating majordomo worker model"""
@@ -169,10 +169,15 @@ class TestBrokerModel(unittest.TestCase):
         self.assertEqual(len(self.broker.waiting), 1)
         self.assertEqual(len(worker.service.waiting), 1)
 
-    @unittest.skip("building up to it")
     def test_dispatch(self):
         """Test dispatch method"""
-        pass
+        worker = self.broker.require_worker(self.address)
+        worker.service = self.broker.require_service(self.service)
+        self.broker.worker_waiting(worker)
+        self.assertEqual(len(worker.service.waiting), 1)
+        self.broker.dispatch(worker.service, [b'hello'])
+        self.assertEqual(len(worker.service.requests), 0)
+        self.assertEqual(len(worker.service.waiting), 0)
 
     def test_send_to_worker(self):
         """Test send to worker method"""
