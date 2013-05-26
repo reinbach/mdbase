@@ -113,7 +113,7 @@ class MajorDomoBroker(object):
     def destroy(self):
         """Disconnect all workers, destroy context"""
         while self.workers:
-            self.delete_worker(self.workers[0], True)
+            self.delete_worker(self.workers[list(self.workers)[0]], True)
         self.ctx.destroy()
 
     def process_client(self, sender, msg):

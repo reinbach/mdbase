@@ -54,12 +54,13 @@ class TestBrokerModel(unittest.TestCase):
         self.assertEqual(b.socket.linger, 0)
         self.assertIsInstance(b.poller, zmq.Poller)
 
-    @unittest.skip("builing up to it")
     def test_broker_destroy(self):
         """Test destroy broker method"""
         b = MajorDomoBroker(False)
+        b.require_worker(self.address)
+        self.assertEqual(len(b.workers), 1)
         b.destroy()
-        #TODO ensure workers list is cleared
+        self.assertEqual(len(b.workers), 0)
 
     @unittest.skip("building up to it")
     def test_process_client(self):
@@ -109,11 +110,6 @@ class TestBrokerModel(unittest.TestCase):
         # delete and disconnect
         self.broker.delete_worker(worker, True)
         self.assertEqual(len(self.broker.workers), 0)
-
-    @unittest.skip("need work service to not be none")
-    def test_delete_worker_service(self):
-        """Test delete worker method with service not none"""
-        pass
 
     def test_require_service(self):
         """Test require service method"""
