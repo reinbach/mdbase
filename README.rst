@@ -21,7 +21,6 @@ Installation
 
 Basic installation;
 
-.. code::
       git clone https://github.com/reinbach/mdbase.git
       cd mdbase/
       python setup.py install
@@ -29,13 +28,11 @@ Basic installation;
 
 To run the tests;
 
-.. code::
       python run_tests.py
 
 
 To check coverage of tests;
 
-.. code::
       pip install coverage
       coverage run --source=mdbase run_tests.py
       coverage report
