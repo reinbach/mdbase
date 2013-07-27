@@ -10,8 +10,8 @@ import logging
 import time
 import zmq
 
-from utils import dump
-from constants import (W_WORKER, W_READY, W_REQUEST,
+from mdbase.utils import dump
+from mdbase.constants import (W_WORKER, W_READY, W_REQUEST,
                        W_REPLY, W_DISCONNECT, W_HEARTBEAT)
 
 class MajorDomoWorker(object):

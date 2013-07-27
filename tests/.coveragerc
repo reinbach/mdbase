@@ -1,0 +1,5 @@
+[run]
+source = mdbase
+
+[html]
+directory = tests/coverage

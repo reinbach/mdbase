@@ -32,13 +32,7 @@ To run the tests;
 
 .. code::
 
-      python run_tests.py
+      pip install -r tests/requirements.txt
+      py.test
 
-
-To check coverage of tests;
-
-.. code::
-
-      pip install coverage
-      coverage run --source=mdbase run_tests.py
-      coverage report
+You can view coverage report at ``tests/coverage``

@@ -10,8 +10,8 @@ import logging
 
 import zmq
 
-from constants import C_CLIENT
-from utils import dump
+from mdbase.constants import C_CLIENT
+from mdbase.utils import dump
 
 class MajorDomoClient(object):
     """Majordomo Protocol Client API

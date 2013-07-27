@@ -14,10 +14,10 @@ from uuid import uuid4
 
 import zmq
 
-from worker import MajorDomoWorker
-from client_sync import MajorDomoClient
+from mdbase.worker import MajorDomoWorker
+from mdbase.client_sync import MajorDomoClient
 
-from utils import zpipe
+from mdbase.utils import zpipe
 
 TITANIC_DIR = ".titanic"
 

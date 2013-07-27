@@ -1,28 +1,27 @@
-import unittest
+import pytest
 import zmq
 
 from mdbase.client import MajorDomoClient
 
-class TestMajorDomoClient(unittest.TestCase):
 
-    def setUp(self):
-        self.broker_url = "tcp://localhost:6666"
+@pytest.fixture
+def broker_url():
+    return "tcp://localhost:6666"
 
-    def test_instantiate(self):
+
+class TestMajorDomoClient():
+    def test_instantiate(self, broker_url):
         """Test instantiating client"""
-        c = MajorDomoClient(self.broker_url)
-        self.assertEqual(c.broker, self.broker_url)
-        self.assertFalse(c.verbose)
-        self.assertIsInstance(c.ctx, zmq.Context)
-        self.assertIsInstance(c.poller, zmq.Poller)
+        c = MajorDomoClient(broker_url)
+        assert c.broker == broker_url
+        assert c.verbose is False
+        assert isinstance(c.ctx, zmq.Context)
+        assert isinstance(c.poller, zmq.Poller)
 
-    def test_verbose(self):
+    def test_verbose(self, broker_url):
         """Test setting of verbose on client"""
-        c = MajorDomoClient(self.broker_url, True)
-        self.assertEqual(c.broker, self.broker_url)
-        self.assertTrue(c.verbose)
-        self.assertIsInstance(c.ctx, zmq.Context)
-        self.assertIsInstance(c.poller, zmq.Poller)
-
-if __name__ == "__main__":
-    unittest.main()
+        c = MajorDomoClient(broker_url, True)
+        assert c.broker == broker_url
+        assert c.verbose is True
+        assert isinstance(c.ctx, zmq.Context)
+        assert isinstance(c.poller, zmq.Poller)

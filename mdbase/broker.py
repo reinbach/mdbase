@@ -14,9 +14,9 @@ from binascii import hexlify
 
 import zmq
 
-from constants import (C_CLIENT, W_WORKER, W_REQUEST, W_READY,
+from mdbase.constants import (C_CLIENT, W_WORKER, W_REQUEST, W_READY,
                        W_REPLY, W_DISCONNECT, W_HEARTBEAT)
-from utils import dump
+from mdbase.utils import dump
 
 log = logging.getLogger(__name__)
 
