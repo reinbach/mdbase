@@ -22,7 +22,7 @@ setup(
     license='BSD',
     url='https://github.com/reinbach/mdbase',
     packages=['mdbase',],
-    long_description=read('README.md'),
+    long_description=read('README.rst'),
     requires=requires,
     classifiers=[
         "Development Status :: 3 - Alpha",
