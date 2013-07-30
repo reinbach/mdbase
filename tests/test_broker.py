@@ -4,6 +4,7 @@ import sys
 import time
 import zmq
 
+from mock import Mock
 from test import support
 
 from mdbase.broker import Service, Worker, MajorDomoBroker, W_READY
@@ -79,11 +80,19 @@ class TestBrokerModel():
         b.destroy()
         assert len(b.workers) == 0
 
-    @pytest.mark.xfail
-    #TODO building up to it
-    def test_process_client(self):
-        """Test process client method"""
-        pass
+    def test_process_client(self, broker):
+        """Test process client method with service internal"""
+        service_internal_mock = Mock()
+        broker.service_internal = service_internal_mock
+        broker.process_client("TEST", [broker.INTERNAL_SERVICE_PREFIX, "hello"])
+        service_internal_mock.assert_called_with(broker.INTERNAL_SERVICE_PREFIX, ["TEST", "", "hello"])
+
+    def test_process_client_dispatch(self, broker):
+        """Test process client method with service internal"""
+        dispatch_mock = Mock()
+        broker.dispatch = dispatch_mock
+        broker.process_client("TEST", ["srv1", "hello"])
+        dispatch_mock.assert_called_with(broker.require_service("srv1"), ["TEST", "", "hello"])
 
     def test_require_worker(self, broker, broker_verbose, address):
         """Test require worker method"""
