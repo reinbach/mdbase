@@ -2,7 +2,7 @@
 mdbase
 ======
 
-ZeroMQ MajorDomo Titanic Patterm implementation
+ZeroMQ MajorDomo Titanic Pattern implementation
 
 Objectives
 ==========
