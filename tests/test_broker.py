@@ -4,10 +4,11 @@ import sys
 import time
 import zmq
 
-from mock import Mock
+from mock import Mock, patch
 from test import support
 
-from mdbase.broker import Service, Worker, MajorDomoBroker, W_READY
+from mdbase.broker import (Service, Worker, MajorDomoBroker, W_READY, W_REQUEST, W_DISCONNECT,
+                           W_HEARTBEAT, W_REPLY, C_CLIENT)
 
 log = logging.getLogger()
 log.addHandler(logging.StreamHandler(sys.stdout))
@@ -105,11 +106,81 @@ class TestBrokerModel():
         worker = broker_verbose.require_worker(address)
         assert len(broker_verbose.workers) == 1
 
-    @pytest.mark.xfail
-    #TODO building up to it
-    def test_process_worker(self):
-        """Test process worker method"""
-        pass
+    def test_process_worker(self, broker, address):
+        """Test process worker method without recognized command"""
+        with support.captured_stdout() as s:
+            broker.process_worker(address, [W_REQUEST, b"hello"])
+            assert "hello" in s.getvalue()
+
+        mock_dump = Mock()
+        with patch('mdbase.broker.dump', mock_dump):
+            broker.process_worker(address, [W_REQUEST, b"hello"])
+            mock_dump.assert_called_with([b"hello"])
+
+    def test_process_worker_disconnect(self, broker, address):
+        """Test process worker method with disconnect command"""
+        mock_delete = Mock()
+        broker.delete_worker = mock_delete
+        broker.process_worker(address, [W_DISCONNECT, b"hello"])
+        mock_delete.assert_called_with(broker.require_worker(address), False)
+
+    def test_process_worker_heartbeat(self, broker, address):
+        """Test process worker method with heartbeat command"""
+        mock_delete = Mock()
+        broker.delete_worker = mock_delete
+        broker.process_worker(address, [W_HEARTBEAT, b"hello"])
+        mock_delete.assert_called_with(broker.require_worker(address), True)
+
+    def test_process_worker_heartbeat_worker_ready(self, broker, address):
+        """Test process worker method with heartbeat command and worker is ready"""
+        worker = broker.require_worker(address)
+        expiry = worker.expiry
+        mock_delete = Mock()
+        broker.delete_worker = mock_delete
+        broker.process_worker(address, [W_HEARTBEAT, b"hello"])
+        assert mock_delete.call_count == 0
+        assert worker.expiry > expiry
+
+    def test_process_worker_reply(self, broker, address):
+        """Test process worker method with reply command"""
+        mock_delete = Mock()
+        broker.delete_worker = mock_delete
+        broker.process_worker(address, [W_REPLY, b"CLIENT", b"", b"hello"])
+        mock_delete.assert_called_with(broker.require_worker(address), True)
+
+    def test_process_worker_reply_worker_ready(self, broker, address):
+        """Test process worker method with reply command and worker is ready"""
+        worker = broker.require_worker(address)
+        worker.service = broker.require_service(service)
+        mock_waiting = Mock()
+        mock_sendmultipart = Mock()
+        broker.worker_waiting = mock_waiting
+        broker.socket.send_multipart = mock_sendmultipart
+        broker.process_worker(address, [W_REPLY, b"CLIENT", b"", b"hello"])
+        mock_waiting.assert_called_with(worker)
+        mock_sendmultipart.assert_called_with([b"CLIENT", b"", C_CLIENT, worker.service.name, b"hello"])
+
+    def test_process_worker_ready(self, broker, address):
+        """Test process worker method with ready command"""
+        mock_waiting = Mock()
+        broker.worker_waiting = mock_waiting
+        broker.process_worker(address, [W_READY, "TEST", b"hello"])
+        mock_waiting.assert_called_with(broker.require_worker(address))
+
+    def test_process_worker_ready_internal_service_prefix(self, broker, address):
+        """Test process worker method with ready command and service equal to internal service prefix"""
+        mock_delete = Mock()
+        broker.delete_worker = mock_delete
+        broker.process_worker(address, [W_READY, "mmi.test", b"hello"])
+        mock_delete.assert_called_with(broker.require_worker(address), True)
+
+    def test_process_worker_ready_worker_ready(self, broker, address):
+        """Test process worker method with ready command and worker ready"""
+        mock_delete = Mock()
+        broker.delete_worker = mock_delete
+        worker = broker.require_worker(address)
+        broker.process_worker(address, [W_READY, "TEST", b"hello"])
+        mock_delete.assert_called_with(worker, True)
 
     def test_delete_worker(self, broker, address, service):
         """Test delete worker method"""
@@ -149,6 +220,7 @@ class TestBrokerModel():
         assert worker.service in broker.services.values()
         assert isinstance(broker.services[service], Service)
 
+    #TODO need more testing
     def test_service_internal(self, broker):
         """Test service internal method"""
         broker.service_internal(b"mmi.service", [b"", b"Hello"])
